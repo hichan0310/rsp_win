@@ -1,12 +1,18 @@
+'''
+데이터셋 만들어주는 코드
+여기에 다른 설명 입력
+건욱이 바보
+'''
+
 import cv2
 import mediapipe as mp
 import time
 import numpy as np
-import torch
-import torch.nn.functional as F
-import torch.nn as nn
-import torch.optim as optim
 from torch import FloatTensor as tensor
+
+
+num_samples = 1000
+
 
 cap = cv2.VideoCapture(0)
 
@@ -17,13 +23,12 @@ mpDraw = mp.solutions.drawing_utils
 pTime = 0
 cTime = 0
 
-x_train_r = np.zeros((1000, 20, 2))
-x_train_s = np.zeros((1000, 20, 2))
-x_train_p = np.zeros((1000, 20, 2))
+x_train_r = np.zeros((num_samples, 20, 2))
+x_train_s = np.zeros((num_samples, 20, 2))
+x_train_p = np.zeros((num_samples, 20, 2))
 
 print("바위")
-
-for _ in range(1000):
+for _ in range(num_samples):
     success, img = cap.read()
     if not success:
         break
@@ -51,13 +56,13 @@ for _ in range(1000):
 
     x_train_r[_] = info
 
+    cv2.putText(img, str(int(_/num_samples*100)), (O_y, O_x), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     cv2.imshow("Image", img)
     cv2.waitKey(1)
 time.sleep(5)
 
 print("가위")
-
-for _ in range(1000):
+for _ in range(num_samples):
     success, img = cap.read()
     if not success:
         break
@@ -85,13 +90,13 @@ for _ in range(1000):
 
     x_train_s[_] = info
 
+    cv2.putText(img, str(int(_/num_samples*100)), (O_y, O_x), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     cv2.imshow("Image", img)
     cv2.waitKey(1)
 time.sleep(5)
 
 print("보")
-
-for _ in range(1000):
+for _ in range(num_samples):
     success, img = cap.read()
     if not success:
         break
@@ -119,55 +124,36 @@ for _ in range(1000):
 
     x_train_p[_] = info
 
+    cv2.putText(img, str(int(_/num_samples*100)), (O_y, O_x), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     cv2.imshow("Image", img)
     cv2.waitKey(1)
-
 cap.release()
 cv2.destroyAllWindows()
+
 
 print(x_train_s)
 print(x_train_r)
 print(x_train_p)
 print("data load complete")
 
-x_train_s = tensor(x_train_s.reshape((1000, -1)))
-x_train_r = tensor(x_train_r.reshape((1000, -1)))
-x_train_p = tensor(x_train_p.reshape((1000, -1)))
+x_train_s = tensor(x_train_s.reshape((num_samples, -1)))
+x_train_r = tensor(x_train_r.reshape((num_samples, -1)))
+x_train_p = tensor(x_train_p.reshape((num_samples, -1)))
 print("tensor change complete")
 
+x_train_all=tensor(np.vstack([x_train_r, x_train_s, x_train_p]))    # (3*num_samples, 40)
+y_train_all=tensor(np.vstack([np.repeat([1, 0, 0], num_samples), np.repeat([0, 1, 0], num_samples), np.repeat([0, 0, 1], num_samples)]).T)
 
+print(x_train_all.shape)
+print(y_train_all.shape)
 
-class learning(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.layer=nn.Sequential(
-            nn.Linear(20, 10),
-            nn.ReLU(),
-            nn.Linear(10, 3),
-        )
-        self.dropout=nn.Dropout(0.1)
+import csv
 
-    def forward(self, x):
-        x = self.layer(x)
-        return x
-model=learning()
-optimizer=optim.SGD(model.parameters(), lr=0.001)
-
-
-
-
-################################################################
-# 이거 반복
-x =     # 미니 배치를 어떻게 잘 만들어야 할지 모르겠음
-y =
-prediction=model(x)
-cost = F.cross_entropy(prediction, y)
-################################################################
-
-
-
-optimizer.zero_grad()
-cost.backward()
-optimizer.step()
-
-#문제점으로 생각되는 것 : 크기를 일정하게 유지하지 않음
+with open('x_train.csv', 'w', encoding='utf-8', newline='') as f:
+    wr = csv.writer(f)
+    for data in x_train_all:
+        wr.writerow(data.int().detach().numpy())
+with open('y_train.csv', 'w', encoding='utf-8', newline='') as f:
+    wr = csv.writer(f)
+    for data in y_train_all:
+        wr.writerow(data.int().detach().numpy())
