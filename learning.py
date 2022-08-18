@@ -14,7 +14,8 @@ from torch.utils.data import TensorDataset, DataLoader
 import csv
 
 sample_size = 1000
-batch_size = 20
+batch_size = 10
+epoches = 200
 
 x_train=[]
 with open('x_train.csv', 'r', encoding='utf-8') as f:
@@ -55,7 +56,7 @@ optimizer=optim.SGD(model.parameters(), lr=0.001)
 datasets=TensorDataset(x_train, y_train)
 dataloader=DataLoader(datasets, batch_size=batch_size, shuffle=True)
 
-for epoch in range(501):
+for epoch in range(epoches+1):
     cost_sum = 0
     for batch_ind, sample in enumerate(dataloader):
         x, y=sample
@@ -69,4 +70,63 @@ for epoch in range(501):
         print("epoch {} : {:.5f}".format(epoch, cost_sum/int(sample_size/batch_size)))
 
     #문제점으로 생각되는 것 : 크기를 일정하게 유지하지 않음
+
+
+
+
+
+
+
+import cv2
+import numpy as np
+import mediapipe as mp
+
+
+cap = cv2.VideoCapture(0)
+
+mpHands = mp.solutions.hands
+hands = mpHands.Hands()
+mpDraw = mp.solutions.drawing_utils
+
+
+while True:
+    success, img = cap.read()
+    if not success:
+        break
+
+    imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    results = hands.process(imgRGB)  # 여기에 추출한 손 정보가 저장됨
+
+    info = np.zeros((20, 2))
+
+    # 이 부분은 나도 정확히 어떤 과정인지 모름
+    # 근데 이렇게 하면 info에 저장이 잘 되더라고
+    O_x, O_y = 0, 0
+    if results.multi_hand_landmarks:
+        for hand_landmark in results.multi_hand_landmarks:
+            for id, lm in enumerate(hand_landmark.landmark):
+                h, w, c = img.shape
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                cv2.putText(img, str(id), (cx, cy), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+                if id == 0:
+                    O_x, O_y = cx, cy
+                else:
+                    info[id - 1][0], info[id - 1][1] = cx - O_x, cy - O_y
+            mpDraw.draw_landmarks(img, hand_landmark, mpHands.HAND_CONNECTIONS)
+    # info : np.array, shape=(20, 2), 손바닥 아래 부분을 기준으로 다른 부위들의 상대적인 위치가 저장되어 있음(1~20의 위치벡터)
+
+    prediction = model(tensor(info.reshape((-1))))
+    print(prediction)
+
+    result="none"
+    if(prediction[0]>0.5):
+        result = "r"
+    if(prediction[1]>0.5):
+        result = "s"
+    if(prediction[2]>0.5):
+        result = "p"
+
+    cv2.putText(img, result, (O_y, O_x), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+    cv2.imshow("Image", img)
+    cv2.waitKey(1)
 
