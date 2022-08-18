@@ -80,7 +80,7 @@ for epoch in range(epoches+1):
 import cv2
 import numpy as np
 import mediapipe as mp
-
+import time
 
 cap = cv2.VideoCapture(0)
 
@@ -88,6 +88,11 @@ mpHands = mp.solutions.hands
 hands = mpHands.Hands()
 mpDraw = mp.solutions.drawing_utils
 
+
+
+
+ptime = 0
+ctime = time.time()
 
 while True:
     success, img = cap.read()
@@ -126,7 +131,12 @@ while True:
     if(prediction[2]>0.5):
         result = "p"
 
-    cv2.putText(img, result, (O_y, O_x), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+    ptime=ctime
+    ctime=time.time()
+    fps=1/(ctime-ptime)
+
+    cv2.putText(img, result, (0, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+    cv2.putText(img, str(int(fps)), (100, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
     cv2.imshow("Image", img)
     cv2.waitKey(1)
 
