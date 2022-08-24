@@ -44,9 +44,9 @@ class learning(nn.Module):
     def __init__(self):
         super().__init__()
         self.layer = nn.Sequential(
-            nn.Linear(40, 20),
+            nn.Linear(40, 10),
             nn.LeakyReLU(),
-            nn.Linear(20, 10),
+            nn.Linear(10, 10),
             nn.LeakyReLU(),
             nn.Linear(10, 4)
         )
@@ -81,6 +81,7 @@ for epoch in range(epoches + 1):
     # 문제점으로 생각되는 것 : 크기를 일정하게 유지하지 않음
 
 arr=np.array(arr)
-plt.plot(np.arange(len(arr)), arr)
+plt.plot(np.arange(len(arr)), arr, color="black", label="cost")
+plt.title('Training Loss')
 plt.show()
 torch.save(model.state_dict(), 'regression_model.pth')

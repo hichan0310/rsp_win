@@ -11,9 +11,9 @@ class learning(nn.Module):
     def __init__(self):
         super().__init__()
         self.layer = nn.Sequential(
-            nn.Linear(40, 20),
+            nn.Linear(40, 10),
             nn.LeakyReLU(),
-            nn.Linear(20, 10),
+            nn.Linear(10, 10),
             nn.LeakyReLU(),
             nn.Linear(10, 4)
         )
